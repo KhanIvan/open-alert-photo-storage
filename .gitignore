@@ -32,3 +32,8 @@ build/
 
 ### Confidential information ###
 **/src/main/resources/application-local.yaml
+
+### Image files ###
+*.jpg
+*.png
+*.gif

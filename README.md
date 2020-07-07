@@ -1,6 +1,6 @@
 # Open Alert Photo Storage
 
-This application manages storing, updating, finding and deleting photos of missing and found persons.
+This application manages storing, updating, finding and deleting photos of missing and found people.
 This microservice is a part of a bigger project that can be found [here](https://github.com/users/KhanIvan/projects/1).
 
 # Technologies
