@@ -9,4 +9,4 @@ This microservice is a part of a bigger project that can be found [here](https:/
 * Amazon AWS3
 
 # Credentials & License
-Look [main project](https://github.com/users/KhanIvan/projects/1) desciprtion.
+Look [main project](https://github.com/users/KhanIvan/projects/1) description.
