@@ -6,14 +6,17 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
+import com.amazonaws.util.IOUtils;
 import com.khaniv.openalertphotostorage.converters.MultipartFileToFileConverter;
 import com.khaniv.openalertphotostorage.dto.MissingPersonImageData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -43,6 +46,14 @@ public class MissingPersonImageStorageService {
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .withRegion(region)
                 .build();
+    }
+
+    public byte[] findMissingPersonImage(MissingPersonImageData missingPersonImageData) throws IOException {
+        checkBucketExists();
+        String name = missingPersonImageData.toString();
+        S3Object object = amazonClient.getObject(bucket, name);
+        S3ObjectInputStream inputStream = object.getObjectContent();
+        return IOUtils.toByteArray(inputStream);
     }
 
     public PutObjectResult uploadImage(MissingPersonImageData missingPersonImageData, MultipartFile image) {
@@ -77,5 +88,4 @@ public class MissingPersonImageStorageService {
         if (!amazonClient.doesBucketExistV2(bucket))
             throw new RuntimeException("Bucket with name " + bucket + " does not exist! Try changing bucket name in properties file.");
     }
-
 }
