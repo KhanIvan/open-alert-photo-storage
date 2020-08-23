@@ -1,6 +1,7 @@
 package com.khaniv.openalertphotostorage.controllers;
 
 import com.khaniv.openalertimagesmanager.dto.MissingPersonImageDto;
+import com.khaniv.openalertphotostorage.constants.PhotoStoragePaths;
 import com.khaniv.openalertphotostorage.services.MissingPersonImageStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -11,32 +12,32 @@ import java.io.IOException;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("v1/storage")
+@RequestMapping(PhotoStoragePaths.STORAGE_CONTROLLER)
 @RequiredArgsConstructor
 @Log4j2
 public class MissingPersonImageStorageController {
     private final MissingPersonImageStorageService missingPersonImageStorageService;
 
-    @PostMapping("/find")
+    @PostMapping(PhotoStoragePaths.FIND)
     public MissingPersonImageDto findLostPersonImage(@RequestBody @NonNull MissingPersonImageDto missingPersonImageDto)
             throws IOException {
         log.info("Find missing person image. " + requestInfo(missingPersonImageDto));
         return missingPersonImageStorageService.findMissingPersonImage(missingPersonImageDto);
     }
 
-    @PostMapping("/store")
+    @PostMapping(PhotoStoragePaths.STORE)
     public void storeLostPersonImage(@RequestBody @NonNull MissingPersonImageDto missingPersonImageDto) {
         log.info("Store lost person image. " + requestInfo(missingPersonImageDto));
         missingPersonImageStorageService.uploadImage(missingPersonImageDto);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(PhotoStoragePaths.ID)
     public void deleteAllByMissingPersonId(@PathVariable(value = "id") @NonNull UUID id) {
         log.info("Delete all images for person ID: " + id);
         missingPersonImageStorageService.deleteAllByMissingPersonId(id);
     }
 
-    @PostMapping("/delete")
+    @PostMapping(PhotoStoragePaths.DELETE)
     public void delete(@RequestBody @NonNull MissingPersonImageDto missingPersonImageDto) {
         log.info("Delete lost person image. " + requestInfo(missingPersonImageDto));
         missingPersonImageStorageService.delete(missingPersonImageDto);

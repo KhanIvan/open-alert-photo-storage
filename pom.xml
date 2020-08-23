@@ -11,5 +11,7 @@
 
     <modules>
         <module>open-alert-photo-storage-service</module>
+        <module>open-alert-photo-storage-api</module>
+        <module>open-alert-photo-storage-common</module>
     </modules>
 </project>
