@@ -6,14 +6,13 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
-import com.amazonaws.util.IOUtils;
-import com.khaniv.openalertphotostorage.converters.MultipartFileToFileConverter;
-import com.khaniv.openalertphotostorage.dto.MissingPersonImageData;
+import com.khaniv.openalertimagesmanager.dto.MissingPersonImageDto;
+import com.khaniv.openalertphotostorage.converters.MissingPersonImageToFileConverter;
+import com.khaniv.openalertphotostorage.converters.S3ObjectToMissingPersonImageConverter;
+import com.khaniv.openalertphotostorage.utils.MissingPersonImageUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -36,7 +35,9 @@ public class MissingPersonImageStorageService {
     @Value("${cloud.aws.region.static}")
     private String region;
 
-    private final MultipartFileToFileConverter multipartFileToFileConverter;
+    private final MissingPersonImageToFileConverter missingPersonImageToFileConverter;
+    private final S3ObjectToMissingPersonImageConverter s3ObjectToMissingPersonImageConverter;
+
     private AmazonS3 amazonClient;
 
     @PostConstruct
@@ -48,23 +49,21 @@ public class MissingPersonImageStorageService {
                 .build();
     }
 
-    public byte[] findMissingPersonImage(MissingPersonImageData missingPersonImageData) throws IOException {
+    public MissingPersonImageDto findMissingPersonImage(MissingPersonImageDto missingPersonImageData) throws IOException {
         checkBucketExists();
-        String name = missingPersonImageData.toString();
-        S3Object object = amazonClient.getObject(bucket, name);
-        S3ObjectInputStream inputStream = object.getObjectContent();
-        return IOUtils.toByteArray(inputStream);
+        S3Object object = amazonClient.getObject(bucket, MissingPersonImageUtils.getFullName(missingPersonImageData));
+        return s3ObjectToMissingPersonImageConverter.convert(object);
     }
 
-    public PutObjectResult uploadImage(MissingPersonImageData missingPersonImageData, MultipartFile image) {
+    public PutObjectResult uploadImage(MissingPersonImageDto missingPersonImage) {
         checkBucketExists();
-        return amazonClient.putObject(bucket, missingPersonImageData.toString(), multipartFileToFileConverter.convert(image));
+        return amazonClient.putObject(bucket, MissingPersonImageUtils.getFullName(missingPersonImage), missingPersonImageToFileConverter.convert(missingPersonImage));
     }
 
     public DeleteObjectsResult deleteAllByMissingPersonId(UUID id) {
         checkBucketExists();
         DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(bucket).withKeys(
-                findObjectsWithPrefix(id + MissingPersonImageData.SLASH).getObjectSummaries()
+                findObjectsWithPrefix(id + MissingPersonImageUtils.SLASH).getObjectSummaries()
                         .stream()
                         .map(S3ObjectSummary::getKey)
                         .map(DeleteObjectsRequest.KeyVersion::new)
@@ -73,13 +72,13 @@ public class MissingPersonImageStorageService {
         return amazonClient.deleteObjects(deleteObjectsRequest);
     }
 
-    public DeleteObjectsResult delete(MissingPersonImageData missingPersonImageData) {
+    public DeleteObjectsResult delete(MissingPersonImageDto missingPersonImage) {
         checkBucketExists();
-        DeleteObjectsRequest request = new DeleteObjectsRequest(bucket).withKeys(missingPersonImageData.toString());
+        DeleteObjectsRequest request = new DeleteObjectsRequest(bucket).withKeys(MissingPersonImageUtils.getFullName(missingPersonImage));
         return amazonClient.deleteObjects(request);
     }
 
-    public ListObjectsV2Result findObjectsWithPrefix(String prefix) {
+    private ListObjectsV2Result findObjectsWithPrefix(String prefix) {
         ListObjectsV2Request listObjectsRequest = new ListObjectsV2Request().withBucketName(bucket).withPrefix(prefix);
         return amazonClient.listObjectsV2(listObjectsRequest);
     }
